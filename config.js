@@ -3,5 +3,5 @@
 window.AI_OFFICE_CONFIG = {
   url: "https://lfutswbzfygysmziknju.supabase.co",
   anonKey: "sb_publishable_y5PaV8wzeNfp26fPhtg1cg_gtz8xbw1",
-  allowedEmail: "",
+  allowedEmail: "dongar79@gmail.com",
 };
