@@ -1,8 +1,8 @@
 /* 최소 서비스 워커: 홈 화면 추가(PWA) 조건용. 네트워크 우선, 실패하면 캐시.
  * 10-29 GPT 리뷰 반영: 이 앱 접두사의 옛 캐시만 지우고, 정상 응답(ok)만 캐시한다. */
 const PREFIX = "ai-office-";
-const CACHE = PREFIX + "v3";
-const FILES = ["./", "./index.html", "./style.css", "./model.js", "./office.js", "./panel.js",
+const CACHE = PREFIX + "v5";
+const FILES = ["./", "./index.html", "./style.css", "./groups.css", "./model.js", "./characters.js", "./office.js", "./panel.js",
   "./data.js", "./demo.js", "./app.js", "./office.svg", "./icon.svg", "./config.js", "./manifest.webmanifest"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).catch(() => {}));

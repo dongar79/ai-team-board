@@ -1,0 +1,66 @@
+﻿/* 그룹 업무량과 휴식 동작. 애니메이션은 캐릭터 안쪽에서만 움직인다. */
+:root { --report: #16865b; }
+.office { aspect-ratio: 390 / 800; }
+.boss { top: 9.75%; }
+.counts { gap: 7px; }
+.c.report b { color: #88e3b4; }
+.char .name { width: 82px; margin-left: -18px; }
+.char .report-label { color: var(--report); font-size: 8px; font-weight: 700; }
+.char .report-label:empty { display: none; }
+.char.report .badge span { background: var(--report); }
+.report .status-ring { color: var(--report); }
+.char.idle .portrait, .char.idle .badge { opacity: .8; }
+.group-tie { fill: var(--group-color, #643d36); }
+.group-card { fill: var(--group-color, #643d36); stroke: white; stroke-width: 1.2px; }
+.work-badge { position: absolute; top: 0; left: 31px; white-space: nowrap; font-size: 8px; line-height: 13px;
+  border-radius: 7px; padding: 0 3px; background: #ffefc8; color: #785319; border: 1px solid #dfc081; }
+.char.busy-0 .work-badge, .char.busy-1 .work-badge { display: none; }
+.char.busy-4 .work-badge { background: #ffe3d9; color: #a23c28; border-color: #dc9e8e; }
+.sweat, .steam, .papers, .paper-high, .coffee { display: none; }
+.person { transform-box: fill-box; transform-origin: center bottom; }
+.hand-left, .hand-right { transform-box: fill-box; transform-origin: center; }
+.busy-1 .hand-left, .busy-1 .hand-right { animation: typing 1.6s ease-in-out infinite alternate; }
+.busy-2 .hand-left, .busy-2 .hand-right, .busy-3 .hand-left, .busy-3 .hand-right { animation: typing .42s ease-in-out infinite alternate; }
+.busy-4 .hand-left, .busy-4 .hand-right { animation: typing .19s ease-in-out infinite alternate; }
+.char .hand-right { animation-delay: -.21s; }
+.busy-2 .sweat, .busy-3 .sweat, .busy-4 .sweat, .busy-2 .papers, .busy-3 .papers, .busy-4 .papers { display: block; }
+.busy-2 .sweat, .busy-3 .sweat { animation: sweat 1.4s ease-in-out infinite; }
+.busy-4 .person { animation: busy-shake .22s ease-in-out infinite alternate; }
+.busy-4 .steam, .busy-4 .paper-high { display: block; }
+.busy-4 .steam { animation: steam .8s ease-out infinite; }
+.char.idle.rest-sit .person { animation: resting 5s ease-in-out infinite; animation-delay: var(--rest-delay); }
+.char.idle.rest-coffee .coffee { display: block; }
+.char.idle.rest-coffee .hand-right, .char.idle.rest-coffee .coffee { animation: coffee 4s ease-in-out infinite; animation-delay: var(--rest-delay); }
+.char.idle.rest-walk .person { animation: walking 8s ease-in-out infinite alternate; animation-delay: var(--rest-delay); }
+@keyframes typing { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+@keyframes sweat { from { transform: translateY(-2px); opacity: .4; } to { transform: translateY(3px); opacity: 1; } }
+@keyframes busy-shake { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+@keyframes steam { from { transform: translateY(2px); opacity: .8; } to { transform: translateY(-5px); opacity: .15; } }
+@keyframes resting { 0%,100% { transform: translateY(3px) scaleY(.94); } 50% { transform: translateY(4px) scaleY(.92); } }
+@keyframes coffee { 0%,70%,100% { transform: translateY(0); } 35% { transform: translateY(-7px); } }
+@keyframes walking { from { transform: translateX(-5px) rotate(-1deg); } to { transform: translateX(5px) rotate(1deg); } }
+.session-card { padding: 0; }
+.session-card.report { border-left-color: var(--report); }
+.card-toggle { border: 0; background: transparent; padding: 9px 10px; width: 100%; text-align: left; border-radius: 5px; }
+.card-expand { margin-top: 6px; font-size: 11px; color: #42618f; }
+.card-threads { padding: 0 9px 9px; }
+.threads-heading { font-size: 12px; margin: 13px 0 7px; }
+.thread-list { display: grid; gap: 6px; min-width: 0; }
+.thread-row { min-width: 0; border: 1px solid #dce2e9; border-radius: 6px; background: #fff; }
+.thread-summary { padding: 8px; cursor: pointer; font-size: 12px; }
+.thread-summary::marker { color: #587499; }
+.thread-title { font-weight: 700; display: inline; }
+.thread-state { display: block; margin-top: 4px; color: #526075; font-size: 11px; }
+.thread-preview { display: block; font-size: 11px; color: #697482; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread-content { padding: 0 8px 7px; font-size: 12px; line-height: 1.5; }
+.thread-content p { margin: 5px 0; }
+.thread-assistant { color: #4d6c87; }
+.thread-row.report .thread-state { color: var(--report); }
+.thread-row.question .thread-state { color: #886500; }
+.thread-row.approval .thread-state { color: var(--approval); }
+summary:focus-visible { outline: 3px solid #2563eb; outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) {
+  .char, .char * { animation: none !important; transition: none !important; }
+  .char .sweat, .char .steam, .char .papers { display: none; }
+  .char .work-badge { display: block; }
+}

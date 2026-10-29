@@ -12,6 +12,7 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="groups.css">
 </head>
 <body>
   <header class="top">
@@ -20,6 +21,7 @@
       <span class="c working">일 <b id="n-working">0</b></span>
       <span class="c question">질문 <b id="n-question">0</b></span>
       <span class="c approval">결재 <b id="n-approval">0</b></span>
+      <span class="c report">보고 <b id="n-report">0</b></span>
     </div>
     <button id="wake" class="wake" type="button" title="화면이 꺼지지 않게 합니다">화면 켜둠 ○</button>
   </header>
@@ -27,19 +29,25 @@
   <main class="office" id="office" aria-label="팀원 배치">
     <img class="bg" src="office.svg" alt="사장실, 총괄실, 개발실, 검토실, 웹데스크와 라운지" draggable="false">
     <svg id="links" class="links" aria-label="위임 관계"></svg>
+    <div id="boss" class="boss"></div>
     <div id="chars" class="chars"></div>
+    <div id="task-bubble" class="task-bubble" role="status" aria-live="polite" hidden></div>
   </main>
   <section class="info" id="info" aria-label="선택한 팀원">
     <div class="info-name" id="info-name">캐릭터를 누르면 작업 내용이 보입니다</div>
-    <div class="info-meta" id="info-host"></div>
-    <div class="info-meta" id="info-parent"></div>
-    <div class="info-note" id="info-note"></div>
+    <div class="info-role" id="info-role"></div>
     <div class="info-task" id="info-task"></div>
+    <div class="info-note" id="info-note"></div>
+    <div class="info-meta" id="info-origin"></div>
+    <div class="info-meta" id="info-parent"></div>
+    <div class="info-meta" id="info-host"></div>
+    <div class="info-meta" id="info-project"></div>
     <div class="info-wait" id="info-wait"></div>
+    <div id="info-threads"></div>
   </section>
   <section class="section" aria-labelledby="sessions-title">
-    <h2 id="sessions-title">세션 <span id="session-count">0</span></h2>
-    <p class="hint">최근 12시간 · 결재, 질문, 일, 쉼 순</p>
+    <h2 id="sessions-title">그룹 담당 <span id="session-count">0</span></h2>
+    <p class="hint">최근 12시간 · 결재, 질문, 완료 보고, 일, 쉼 순 · 누르면 쓰레드 펼침</p>
     <div id="sessions" class="sessions"></div>
   </section>
   <div id="notice" class="notice" hidden></div>
@@ -55,6 +63,7 @@
       <button data-agent="main:demo0001" data-status="question">메인 질문</button>
       <button data-agent="main:demo0001" data-status="approval">메인 결재</button>
       <button data-agent="main:demo0001" data-status="idle">메인 쉼</button>
+      <button data-agent="main:demo0001" data-status="report">완료 보고</button>
     </div>
     <div class="demo-row">
       <button data-agent="sub:demo0001:aaaa1111" data-status="working">서브 일함</button>
@@ -67,6 +76,7 @@
   <footer class="footer">보기 전용 · <a href="?demo=1">데모 보기</a></footer>
   <script src="config.js"></script>
   <script src="model.js"></script>
+  <script src="characters.js"></script>
   <script src="office.js"></script>
   <script src="panel.js"></script>
   <script src="data.js"></script>
