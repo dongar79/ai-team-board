@@ -1,8 +1,9 @@
 /* 최소 서비스 워커: 홈 화면 추가(PWA) 조건용. 네트워크 우선, 실패하면 캐시.
  * 10-29 GPT 리뷰 반영: 이 앱 접두사의 옛 캐시만 지우고, 정상 응답(ok)만 캐시한다. */
 const PREFIX = "ai-office-";
-const CACHE = PREFIX + "v2";
-const FILES = ["./", "./index.html", "./style.css", "./app.js", "./office.svg", "./icon.svg", "./config.js"];
+const CACHE = PREFIX + "v3";
+const FILES = ["./", "./index.html", "./style.css", "./model.js", "./office.js", "./panel.js",
+  "./data.js", "./demo.js", "./app.js", "./office.svg", "./icon.svg", "./config.js", "./manifest.webmanifest"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).catch(() => {}));
   self.skipWaiting();
@@ -13,7 +14,7 @@ self.addEventListener("activate", (e) => {
   ).then(() => self.clients.claim()));
 });
 self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET" || !e.request.url.startsWith(self.location.origin)) return;
+  if (e.request.method !== "GET" || new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(fetch(e.request).then((r) => {
     if (r && r.ok) {
       const copy = r.clone();

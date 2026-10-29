@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
@@ -23,23 +23,33 @@
     </div>
     <button id="wake" class="wake" type="button" title="화면이 꺼지지 않게 합니다">화면 켜둠 ○</button>
   </header>
-
-  <main class="office" id="office">
-    <img class="bg" src="office.svg" alt="사무실 배경" draggable="false">
+  <div id="summary" class="summary" aria-live="polite">오늘 요약 · 활동 기록을 확인하고 있습니다</div>
+  <main class="office" id="office" aria-label="팀원 배치">
+    <img class="bg" src="office.svg" alt="사장실, 총괄실, 개발실, 검토실, 웹데스크와 라운지" draggable="false">
+    <svg id="links" class="links" aria-label="위임 관계"></svg>
     <div id="chars" class="chars"></div>
   </main>
-
-  <section class="info" id="info">
+  <section class="info" id="info" aria-label="선택한 팀원">
     <div class="info-name" id="info-name">캐릭터를 누르면 작업 내용이 보입니다</div>
+    <div class="info-meta" id="info-host"></div>
+    <div class="info-meta" id="info-parent"></div>
     <div class="info-note" id="info-note"></div>
     <div class="info-task" id="info-task"></div>
     <div class="info-wait" id="info-wait"></div>
   </section>
-
+  <section class="section" aria-labelledby="sessions-title">
+    <h2 id="sessions-title">세션 <span id="session-count">0</span></h2>
+    <p class="hint">최근 12시간 · 결재, 질문, 일, 쉼 순</p>
+    <div id="sessions" class="sessions"></div>
+  </section>
   <div id="notice" class="notice" hidden></div>
-
+  <section class="section" aria-labelledby="activity-title">
+    <h2 id="activity-title">최근 활동</h2>
+    <p id="activity-status" class="hint">최근 20건 · 한국 시간</p>
+    <ol id="timeline" class="timeline"></ol>
+  </section>
   <section id="demo" class="demo" hidden>
-    <div class="demo-title">데모 모드 (실제 DB 연결 없음)</div>
+    <div class="demo-title">데모 모드 · 실제 연결 없음</div>
     <div class="demo-row">
       <button data-agent="main:demo0001" data-status="working">메인 일함</button>
       <button data-agent="main:demo0001" data-status="question">메인 질문</button>
@@ -47,16 +57,20 @@
       <button data-agent="main:demo0001" data-status="idle">메인 쉼</button>
     </div>
     <div class="demo-row">
-      <button data-agent="sub:demo0001:aaaa1111" data-status="working">서브1 일함</button>
-      <button data-agent="sub:demo0001:bbbb2222" data-status="working">서브2 일함</button>
-      <button data-agent="sub:demo0001:aaaa1111" data-status="idle">서브1 쉼</button>
-      <button data-agent="main:demo0002" data-status="approval">다른 세션 결재</button>
-      <button data-old="1">결재 7분 전으로</button>
+      <button data-agent="sub:demo0001:aaaa1111" data-status="working">서브 일함</button>
+      <button data-agent="sub:demo0001:aaaa1111" data-status="idle">서브 쉼</button>
+      <button data-agent="gpt" data-status="idle">GPT 쉼</button>
+      <button data-agent="gpt" data-status="working">GPT 일함</button>
+      <button data-old="1">대기 7분으로</button>
     </div>
   </section>
-
+  <footer class="footer">보기 전용 · <a href="?demo=1">데모 보기</a></footer>
   <script src="config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <script src="model.js"></script>
+  <script src="office.js"></script>
+  <script src="panel.js"></script>
+  <script src="data.js"></script>
+  <script src="demo.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
