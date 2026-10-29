@@ -4,7 +4,7 @@
   const board = window.AIOffice = {
     rows: new Map(), events: [], selected: null, eventsReady: false,
     demo: new URLSearchParams(location.search).get("demo") === "1",
-    reserved: { gpt: "GPT · 개발", gemini: "Gemini · 검토", aside: "Aside · 웹" },
+    reserved: { gpt: true, gemini: true, aside: true },
     priority: { approval: 0, question: 1, working: 2, idle: 3 },
     lateMs: 5 * 60000, staleMs: 12 * 3600000, workStaleMs: 20 * 60000,
     $: (id) => document.getElementById(id),
@@ -15,10 +15,10 @@
   };
   board.since = (row) => board.time(row.status_since) || board.time(row.updated_at);
   board.elapsed = (row, now = Date.now()) => Math.max(0, now - board.since(row));
-  board.displayName = (row) => board.reserved[row.agent] || (row.agent.startsWith("sub:") ? "Claude 서브" : "Claude");
-  board.shortName = (row) => board.reserved[row.agent] || (row.agent.startsWith("sub:") ? "서브" : row.project || "Claude");
-  board.effective = (row, now = Date.now()) => row.status === "working" && board.elapsed(row, now) >= board.workStaleMs
-    ? { ...row, status: "idle", unresponsive: true, task: "응답 없음 (일 상태가 20분 이상 지속됨)" } : row;
+  // 무응답 판정은 마지막 기록(updated_at) 기준. 계속 기록이 오는 세션은 오래 일해도 '일하는 중' (10-30 총괄 수정)
+  board.effective = (row, now = Date.now()) => row.status === "working"
+      && now - (board.time(row.updated_at) || now) >= board.workStaleMs
+    ? { ...row, status: "idle", unresponsive: true, task: "응답 없음 (20분 이상 기록 없음)" } : row;
   board.compare = (a, b) => board.priority[a.status] - board.priority[b.status] || board.since(a) - board.since(b) || a.agent.localeCompare(b.agent);
   board.liveRows = (now = Date.now()) => [...board.rows.values()]
     .filter((row) => !board.reserved[row.agent] && now - board.time(row.updated_at) < board.staleMs)
