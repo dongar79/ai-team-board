@@ -24,6 +24,9 @@
       content.append(field("p", "", "쓰레드: " + title(thread) + " · 폴더: " + (thread.project || "미확인") + " · PC: " + (thread.host || "미확인")),
         field("p", "", "지금: " + (thread.task || "쉬는 중")), field("p", "", "지시: " + (thread.note || "기록 없음")));
       if (board.roleKey(row) !== "main") content.append(field("p", "", "연결: " + board.sourceLabel(thread)));
+      if (board.reviewLine) content.appendChild(field("p", "thread-review", board.reviewLine(thread)));
+      if (thread.detail) content.appendChild(field("p", "thread-detail", thread.detail));
+      if (board.makeResultLinks && (thread.detail || thread.link)) content.appendChild(board.makeResultLinks(thread));
       (thread.assistants || []).forEach((assistant) => content.append(field("p", "thread-assistant", "보조 · " + board.statusLabel(assistant.status) + " · " + (assistant.task || "쉬는 중"))));
       detail.append(summary, content);
       detail.addEventListener("toggle", () => { if (detail.open) openThreads.add(key); else openThreads.delete(key); });
@@ -53,6 +56,7 @@
     board.$("info-wait").textContent = row ? "경과 시간: " + (board.since(row) ? board.minutes(board.elapsed(row)) + "분" : "기록 없음") : "";
     board.$("info-wait").className = "info-wait" + (row && board.waiting(row) && board.elapsed(row) >= board.lateMs ? " late" : "");
     board.$("info-threads").replaceChildren();
+    if (board.renderReviewer) board.renderReviewer(row);
     if (row) board.$("info-threads").append(field("h3", "threads-heading", "맡은 쓰레드 " + (row.threads || []).length + "개"), threadList(row, "정보"));
     const cards = board.$("sessions");
     const focused = document.activeElement && document.activeElement.dataset.session;
@@ -88,11 +92,15 @@
       ? `오늘 · 지시 ${summary.orders} · 결재 ${summary.approvals} · 질문 ${summary.questions} · 완료 보고 ${summary.reports || 0} · 최장 대기 ${summary.longest}분`
       : "오늘 요약 · 활동 기록을 확인하고 있습니다";
     const timeline = board.$("timeline"); timeline.replaceChildren();
-    [...board.events].sort((a, b) => board.time(b.created_at) - board.time(a.created_at) || Number(b.id) - Number(a.id)).slice(0, 20).forEach((event) => {
+    const activities = board.activityRecords ? board.activityRecords() : board.events;
+    activities.forEach((event) => {
       const time = new Date(event.created_at).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false });
-      const item = field("li", "activity", `${time} ${board.displayName(event)} · ${title(event).slice(0, 28)} · ${event.task || board.statusLabel(event.status)}`);
-      item.title = "쓰레드: " + title(event) + " · PC: " + (event.host || "이름 미확인"); timeline.appendChild(item);
+      const review = event.activityKind === "review";
+      const text = review ? `${time} 🔎 ${board.reviewerName(event.reviewer)} · ${event.kind} · ${event.verdict} · ${event.target} · ${event.summary}`
+        : `${time} ● ${board.displayName(event)} · ${title(event).slice(0, 28)} · ${event.task || board.statusLabel(event.status)}`;
+      const item = field("li", "activity" + (review ? " review" : ""), text);
+      item.title = "쓰레드: " + (review ? event.target : title(event)) + " · PC: " + (event.host || "이름 미확인"); timeline.appendChild(item);
     });
-    if (!board.events.length) timeline.appendChild(field("li", "empty", board.eventsReady ? "최근 활동이 없습니다" : "활동 기록을 불러오는 중입니다"));
+    if (!activities.length) timeline.appendChild(field("li", "empty", board.eventsReady ? "최근 활동이 없습니다" : "활동 기록을 불러오는 중입니다"));
   };
 })();

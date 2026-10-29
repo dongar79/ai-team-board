@@ -1,0 +1,39 @@
+/* 점검은 글자와 색으로 함께 구분하고, 보고함은 휴대폰 너비 안에 담는다. */
+.top button.c { border: 0; padding: 4px 0; font: inherit; color: inherit; background: transparent; }
+.demo-label { font-size: 10px; color: #b4d6ff; font-weight: 400; }
+.boss { pointer-events: auto; background: transparent; padding: 0; border: 0; z-index: 2; }
+.char.reserved .portrait { height: 44px; }
+.char .review-badge { display: block; margin: 2px 0 0 -10px; width: 66px; padding: 1px 3px;
+  border: 1px solid currentColor; border-radius: 6px; font-size: 8px; line-height: 11px; white-space: nowrap; background: #fff; }
+.char .review-badge[hidden] { display: none; }
+.review-badge.passed, .review-item.passed > strong { color: #166534; }
+.review-badge.failed, .review-item.failed > strong { color: #b91c1c; }
+.review-badge.held, .review-item.held > strong { color: #59636f; }
+.review-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.review-item { border: 1px solid #dbe3ea; border-radius: 6px; padding: 8px; background: #f8fafc; font-size: 12px; line-height: 1.5; }
+.review-item p { margin: 5px 0; white-space: pre-wrap; }
+.review-item small { color: #586576; }
+.review-stale { padding: 7px 9px; border-radius: 6px; background: #fff3cd; color: #765400; font-size: 11px; line-height: 1.5; }
+.thread-review { font-size: 11px; color: #405e4c; line-height: 1.6; }
+.thread-detail { white-space: pre-wrap; }
+.activity.review { padding-left: 8px; border-left: 3px solid #7c9f88; background: #f4f9f5; }
+.reportbox { width: min(460px, calc(100vw - 20px)); max-height: calc(100dvh - 32px); padding: 14px;
+  border: 1px solid #bcc6d2; border-radius: 14px; color: #23262d; background: #f3f5f8; overflow: auto; }
+.reportbox::backdrop { background: #142134b3; }
+.reportbox-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.reportbox-close { border: 1px solid #b5c2d3; border-radius: 7px; background: #fff; padding: 7px 10px; }
+.reportbox-list { display: grid; gap: 10px; min-width: 0; }
+.reportbox-item { padding: 11px; border: 1px solid #d9e0e8; border-left: 4px solid #16865b; border-radius: 9px; background: #fff; overflow-wrap: anywhere; min-width: 0; }
+.reportbox-item.approval { border-left-color: #d9382c; }
+.reportbox-item.question { border-left-color: #d5a018; }
+.reportbox-identity { display: flex; align-items: center; gap: 6px; font-size: 12px; flex-wrap: wrap; }
+.reportbox-state { margin-left: auto; font-size: 11px; color: #526075; }
+.reportbox-title { font-size: 14px; line-height: 1.5; margin: 8px 0 3px; }
+.reportbox-age { color: #647084; font-size: 11px; }
+.reportbox-detail { font-size: 13px; line-height: 1.65; white-space: pre-wrap; margin: 9px 0; }
+.result-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; min-width: 0; }
+.result-link, .copy-link { padding: 7px 9px; border-radius: 6px; border: 1px solid #aec2da; background: #f0f5fc;
+  color: #284c77; font: inherit; font-size: 11px; text-decoration: none; overflow-wrap: anywhere; max-width: 100%; }
+.desktop-link { width: 100%; min-width: 0; padding: 6px; border: 1px solid #d4dce6; border-radius: 5px; font-size: 10px; color: #526075; }
+.link-hint, .copy-status { flex-basis: 100%; font-size: 10px; line-height: 1.5; color: #647084; }
+.work-path { flex-basis: 100%; font-size: 10px; line-height: 1.6; color: #526075; overflow-wrap: anywhere; }

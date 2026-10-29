@@ -13,15 +13,28 @@
   <link rel="apple-touch-icon" href="icon.svg">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="groups.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="reports.css">
 </head>
 <body>
+  <section id="login-screen" class="login-screen" aria-labelledby="login-title">
+    <div class="login-mark" aria-hidden="true">🔐</div>
+    <h1 id="login-title">AI팀 사무실</h1>
+    <p>사장님만 볼 수 있는 업무 상황판입니다.</p>
+    <p id="login-email" class="login-email">허용 이메일 등록 대기</p>
+    <button id="login-send" class="login-button" type="button" disabled>사장님 이메일로 로그인 링크 받기</button>
+    <p id="login-status" class="login-status" role="status" aria-live="polite">로그인 설정을 확인하고 있습니다.</p>
+    <a href="?demo=1">데모 보기</a>
+  </section>
+  <button id="logout" class="logout" type="button" hidden>로그아웃</button>
+  <div id="board-app" hidden>
   <header class="top">
     <div class="title">AI팀 사무실 <span id="conn" class="dot" title="연결 상태"></span></div>
     <div class="counts">
       <span class="c working">일 <b id="n-working">0</b></span>
-      <span class="c question">질문 <b id="n-question">0</b></span>
-      <span class="c approval">결재 <b id="n-approval">0</b></span>
-      <span class="c report">보고 <b id="n-report">0</b></span>
+      <button class="c question" type="button" data-reportbox>질문 <b id="n-question">0</b></button>
+      <button class="c approval" type="button" data-reportbox>결재 <b id="n-approval">0</b></button>
+      <button class="c report" type="button" data-reportbox>보고 <b id="n-report">0</b></button>
     </div>
     <button id="wake" class="wake" type="button" title="화면이 꺼지지 않게 합니다">화면 켜둠 ○</button>
   </header>
@@ -29,7 +42,7 @@
   <main class="office" id="office" aria-label="팀원 배치">
     <img class="bg" src="office.svg" alt="사장실, 총괄실, 개발실, 검토실, 웹데스크와 라운지" draggable="false">
     <svg id="links" class="links" aria-label="위임 관계"></svg>
-    <div id="boss" class="boss"></div>
+    <button id="boss" class="boss" type="button" aria-label="사장실 보고함 열기"></button>
     <div id="chars" class="chars"></div>
     <div id="task-bubble" class="task-bubble" role="status" aria-live="polite" hidden></div>
   </main>
@@ -43,6 +56,7 @@
     <div class="info-meta" id="info-host"></div>
     <div class="info-meta" id="info-project"></div>
     <div class="info-wait" id="info-wait"></div>
+    <div id="info-reviews"></div>
     <div id="info-threads"></div>
   </section>
   <section class="section" aria-labelledby="sessions-title">
@@ -74,13 +88,17 @@
     </div>
   </section>
   <footer class="footer">보기 전용 · <a href="?demo=1">데모 보기</a></footer>
+  </div>
   <script src="config.js"></script>
   <script src="model.js"></script>
   <script src="characters.js"></script>
+  <script src="reviews.js"></script>
+  <script src="reportbox.js"></script>
   <script src="office.js"></script>
   <script src="panel.js"></script>
   <script src="data.js"></script>
   <script src="demo.js"></script>
+  <script src="auth.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

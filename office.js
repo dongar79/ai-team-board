@@ -44,7 +44,8 @@
         element = document.createElement("button");
         element.type = "button"; element.dataset.agent = row.agent;
         element.innerHTML = '<span class="badge"><span></span></span><span class="work-badge"></span>' + board.portrait(board.roleKey(row))
-          + '<span class="name"><span class="role-name"></span><span class="project-name"></span><span class="report-label"></span></span>';
+          + '<span class="name"><span class="role-name"></span><span class="project-name"></span><span class="report-label"></span></span>'
+          + '<span class="review-badge" hidden></span>';
         element.addEventListener("click", () => {
           const agent = element.dataset.agent;
           board.select(agent);
@@ -67,7 +68,14 @@
       element.querySelector(".role-name").textContent = board.shortName(row);
       element.querySelector(".project-name").textContent = row.host || "PC 미확인";
       element.querySelector(".report-label").textContent = row.status === "report" ? "완료 보고" : "";
+      const reviewBadge = element.querySelector(".review-badge");
+      reviewBadge.hidden = !["gpt", "gemini", "aside"].includes(board.roleKey(row));
+      if (!reviewBadge.hidden && board.reviewBadge) {
+        const result = board.reviewBadge(board.roleKey(row));
+        reviewBadge.className = "review-badge " + result.state; reviewBadge.textContent = result.text; reviewBadge.title = result.title;
+      }
       element.title = board.displayName(row) + " · " + (row.host || "PC 미확인") + " · " + board.statusLabel(row.status) + " · 업무 " + busy + "건";
+      if (!reviewBadge.hidden) element.title += " · 점검 " + reviewBadge.textContent;
       element.setAttribute("aria-label", element.title); element.setAttribute("aria-pressed", String(board.selected === row.agent));
     });
     layer.querySelectorAll(".char").forEach((element) => { if (!seen.has(element.dataset.agent)) element.remove(); });

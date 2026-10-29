@@ -4,7 +4,7 @@
   const board = window.AIOffice;
   board.render = () => {
     const layout = board.layout();
-    board.renderOffice(layout); board.renderPanels(layout);
+    board.renderOffice(layout); board.renderPanels(layout); board.renderReportbox();
   };
   let wakeLock = null, wakeWanted = true, wakePending = false;
   const wakeButton = board.$("wake");
@@ -46,6 +46,8 @@
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
   board.render();
-  if (board.demo) board.startDemo(); else board.startData();
+  if (board.demo) {
+    board.$("login-screen").hidden = true; board.$("board-app").hidden = false; board.startDemo();
+  } else board.startAuth();
   setInterval(board.render, 10000);
 })();

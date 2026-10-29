@@ -1,0 +1,20 @@
+/* 로그인 확인이 끝나기 전에는 업무 내용을 숨긴다. */
+[hidden] { display: none !important; }
+#board-app { display: contents; }
+.login-screen { margin: max(42px, 12vh) 18px 24px; padding: 26px 22px; background: #fff;
+  border: 1px solid #dce1e8; border-radius: 18px; box-shadow: 0 8px 30px #24314812; }
+.login-mark { font-size: 30px; margin-bottom: 12px; }
+.login-screen h1 { margin: 0 0 12px; font-size: 23px; }
+.login-screen p { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.login-email { font-weight: 700; }
+.login-button { width: 100%; border: 0; border-radius: 10px; padding: 14px 10px;
+  background: #284f88; color: #fff; font-weight: 700; font-size: 14px; }
+.login-button:disabled { opacity: .55; cursor: default; }
+.login-status { color: #526075; min-height: 44px; }
+.login-screen a { color: #284f88; font-size: 13px; }
+.logout { border: 1px solid #6b7280; background: transparent; color: #eee;
+  border-radius: 10px; font-size: 11px; padding: 4px 8px; }
+.login-screen .logout { display: block; margin-top: 14px; color: #284f88; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .login-screen { grid-column: 1 / -1; max-width: 420px; margin: 20px auto; }
+}

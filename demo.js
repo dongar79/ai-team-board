@@ -5,6 +5,10 @@
   board.startDemo = () => {
     board.$("demo").hidden = false; board.eventsReady = true;
     board.setConn("demo", "데모 · 실제 연결 없음");
+    if (!board.$("demo-label")) {
+      const label = document.createElement("span"); label.id = "demo-label"; label.className = "demo-label";
+      label.textContent = "데모"; label.title = "예시 데이터 · 실제 연결 없음"; board.$("conn").after(label);
+    }
     const now = Date.now();
     const ago = (minutes) => new Date(now - minutes * 60000).toISOString();
     const add = (agent, status, project, host, task, note, age, parent = "", group_name = "컴퓨터", title = "") => board.upsert({
@@ -40,6 +44,21 @@
     add("gemini", "working", "경사로", "회사-PC", "최종 문서 교차검토", "문서 검토", 6,
       "main:demo0002", "", "최종 문서 검토");
     add("aside", "idle", "", "집-PC", "", "", 5);
+    const reports = {
+      "main:demo0002": "최종 문서 확인을 요청합니다. 안내문을 읽고 수정할 내용을 알려 주세요.",
+      "main:demo0003": "입금 목록을 어떤 순서로 보여 드릴까요?\n선택지: 최근 입금순 / 호실순 / 확인이 필요한 항목순",
+      "main:demo0009": "휴대폰 화면과 보고함을 정리했습니다. 테스트 27개를 통과했습니다.\n결과: https://example.github.io/board/ https://drive.google.com/drive/folders/demo https://example.com/result\n문서: 00_Work\\상황판\\5차 작업 보고서.md",
+    };
+    Object.entries(reports).forEach(([agent, detail]) => Object.assign(board.rows.get(agent), {
+      detail, link: "claude://claude.ai/epitaxy/local_" + agent.split(":")[1],
+    }));
+    board.reviewsReady = true;
+    board.reviews = [
+      { id: 101, created_at: ago(1), reviewer: "gemini", target: "화면 수정 결과 보고", kind: "교차 검토", verdict: "통과", summary: "보고 내용과 결과물 연결을 대조했습니다.", host: "집-노트북", detail_url: "https://example.com/review" },
+      { id: 102, created_at: ago(2), reviewer: "gpt", target: "화면 수정 결과 보고", kind: "테스트", verdict: "통과", summary: "테스트 27개 통과", host: "집-노트북", detail_url: "" },
+      { id: 103, created_at: ago(0), reviewer: "gpt", target: "그룹 화면 구현", kind: "코드 리뷰", verdict: "수정 필요", summary: "좁은 화면의 긴 제목 줄바꿈을 보완해야 합니다.", host: "회사-PC", detail_url: "" },
+      { id: 104, created_at: ago(3), reviewer: "aside", target: "경사로 설치 안내 확인", kind: "웹 확인", verdict: "보류", summary: "인증 이후 실제 문서 열기를 추가 확인해야 합니다.", host: "회사-PC", detail_url: "" },
+    ];
     let nextId = 1;
     const addEvent = (row, status, task, at) => board.events.push({ id: nextId++, agent: row.agent,
       project: row.project, host: row.host, group_name: row.group_name, title: row.title,
