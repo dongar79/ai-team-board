@@ -8,6 +8,7 @@
   const DEMO = new URLSearchParams(location.search).has("demo");
   const LATE_MS = 5 * 60 * 1000;          // 질문·결재 5분 넘으면 경고
   const STALE_MS = 12 * 60 * 60 * 1000;   // 12시간 넘은 행은 세션이 죽은 것으로 보고 숨김
+  const WORK_STALE_MS = 20 * 60 * 1000;   // 20분 넘게 갱신 없는 working 은 '응답 없음' 으로 라운지
   const RESERVED = { gpt: "GPT", gemini: "Gemini", aside: "Aside" };
 
   // 사무실 좌표 (office.svg 390x440 기준, %). 발 끝 위치.
@@ -41,7 +42,10 @@
   // ---------- 배치 ----------
   function layout() {
     const all = [...rows.values()];
-    const live = all.filter((r) => !RESERVED[r.agent] && elapsedMs(r) < STALE_MS);
+    // 20분 넘게 갱신 없는 working 은 세션이 강제 종료된 것으로 보고 '응답 없음' 으로 라운지에 둔다
+    const live = all.filter((r) => !RESERVED[r.agent] && elapsedMs(r) < STALE_MS)
+      .map((r) => (r.status === "working" && elapsedMs(r) > WORK_STALE_MS)
+        ? Object.assign({}, r, { status: "idle", task: "응답 없음 (20분 이상 갱신 없음)" }) : r);
     const byTime = (a, b) => new Date(a.updated_at) - new Date(b.updated_at);
     const approval = live.filter((r) => r.status === "approval").sort(byTime);
     const desk = live.filter((r) => r.status === "working" || r.status === "question").sort(byTime);
@@ -113,11 +117,12 @@
     }
     if (!row) {
       $("info-name").textContent = "지금 일하는 팀원이 없습니다";
-      $("info-task").textContent = ""; $("info-wait").textContent = ""; return;
+      $("info-note").textContent = ""; $("info-task").textContent = ""; $("info-wait").textContent = ""; return;
     }
     const m = minutes(elapsedMs(row));
     $("info-name").textContent = displayName(row) + " · " + statusLabel(row.status);
-    $("info-task").textContent = row.task || "";
+    $("info-note").textContent = row.note ? "지시: " + row.note : "";
+    $("info-task").textContent = row.task ? (row.status === "working" ? "지금: " : "") + row.task : "";
     const waitEl = $("info-wait");
     if (row.status === "approval" || row.status === "question") {
       waitEl.textContent = statusLabel(row.status) + " " + m + "분" + (m >= 5 ? " ⚠" : "");
@@ -131,10 +136,25 @@
   function upsert(row) { if (row && row.agent) rows.set(row.agent, row); }
 
   // ---------- Supabase ----------
+  let loadGen = 0;  // 늦게 끝난 옛 조회가 최신 결과를 덮지 않도록 (GPT 리뷰 10-29)
   async function loadAll() {
-    const { data, error } = await client.from("agent_status").select("*");
-    if (error) { setConn("off", "읽기 실패: " + error.message); return; }
-    rows.clear(); data.forEach(upsert); render();
+    const gen = ++loadGen;
+    try {
+      const { data, error } = await client.from("agent_status").select("*");
+      if (gen !== loadGen) return;
+      if (error) { setConn("off", "읽기 실패: " + error.message); return; }
+      // Realtime 으로 더 새 행을 이미 받았으면 그쪽을 남긴다
+      const fresh = new Map(rows);
+      rows.clear();
+      data.forEach((r) => {
+        const had = fresh.get(r.agent);
+        upsert(had && new Date(had.updated_at) > new Date(r.updated_at) ? had : r);
+      });
+      setConn("on", "읽기 성공 " + new Date().toLocaleTimeString());
+      render();
+    } catch (e) {
+      if (gen === loadGen) setConn("off", "읽기 오류: " + (e && e.message));
+    }
   }
   function subscribe() {
     client.channel("agent_status_watch")
@@ -182,6 +202,37 @@
     document.addEventListener("visibilitychange", () => { if (!document.hidden) loadAll(); });
   }
   setInterval(render, 10000);                            // 경과 시간·5분 경고 갱신
+
+  // ---------- 화면 켜둠 (Screen Wake Lock) ----------
+  // 휴대폰이 자동으로 꺼지지 않게 한다. 기본 켜짐, 헤더 버튼으로 끌 수 있다. 설정은 이 휴대폰에만 저장.
+  let wakeLock = null, wakeWanted = true;
+  const wakeBtn = $("wake");
+  function paintWake() {
+    if (!wakeBtn) return;
+    if (!("wakeLock" in navigator)) { wakeBtn.textContent = "켜둠 불가"; wakeBtn.disabled = true; wakeBtn.title = "이 브라우저는 화면 켜둠을 지원하지 않습니다"; return; }
+    wakeBtn.textContent = wakeLock ? "화면 켜둠 ●" : "화면 켜둠 ○";
+    wakeBtn.classList.toggle("on", !!wakeLock);
+    wakeBtn.title = wakeLock ? "화면이 꺼지지 않습니다. 누르면 해제" : "누르면 화면이 꺼지지 않게 합니다";
+  }
+  async function acquireWake() {
+    if (!("wakeLock" in navigator) || wakeLock || document.hidden) { paintWake(); return; }
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; paintWake(); });
+    } catch (e) { wakeLock = null; }
+    paintWake();
+  }
+  function releaseWake() { if (wakeLock) wakeLock.release().catch(() => {}); wakeLock = null; paintWake(); }
+  try { wakeWanted = localStorage.getItem("ai-office-wake") !== "0"; } catch (e) { /* 저장 못 해도 동작 */ }
+  if (wakeBtn) wakeBtn.addEventListener("click", () => {
+    wakeWanted = !wakeLock;
+    try { localStorage.setItem("ai-office-wake", wakeWanted ? "1" : "0"); } catch (e) { /* 무시 */ }
+    if (wakeWanted) acquireWake(); else releaseWake();
+  });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && wakeWanted) acquireWake(); });
+  document.addEventListener("pointerdown", () => { if (wakeWanted && !wakeLock) acquireWake(); }); // iOS 는 터치 뒤에만 허용
+  paintWake();
+  if (wakeWanted) acquireWake();
   if ("serviceWorker" in navigator && !DEMO && location.protocol === "https:") {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
