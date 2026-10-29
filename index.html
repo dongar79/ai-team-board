@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AI팀 사무실</title>
+  <meta name="theme-color" content="#2b2f3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AI팀 사무실">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="title">AI팀 사무실 <span id="conn" class="dot" title="연결 상태"></span></div>
+    <div class="counts">
+      <span class="c working">일 <b id="n-working">0</b></span>
+      <span class="c question">질문 <b id="n-question">0</b></span>
+      <span class="c approval">결재 <b id="n-approval">0</b></span>
+    </div>
+  </header>
+
+  <main class="office" id="office">
+    <img class="bg" src="office.svg" alt="사무실 배경" draggable="false">
+    <div id="chars" class="chars"></div>
+  </main>
+
+  <section class="info" id="info">
+    <div class="info-name" id="info-name">캐릭터를 누르면 작업 내용이 보입니다</div>
+    <div class="info-task" id="info-task"></div>
+    <div class="info-wait" id="info-wait"></div>
+  </section>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <section id="demo" class="demo" hidden>
+    <div class="demo-title">데모 모드 (실제 DB 연결 없음)</div>
+    <div class="demo-row">
+      <button data-agent="main:demo0001" data-status="working">메인 일함</button>
+      <button data-agent="main:demo0001" data-status="question">메인 질문</button>
+      <button data-agent="main:demo0001" data-status="approval">메인 결재</button>
+      <button data-agent="main:demo0001" data-status="idle">메인 쉼</button>
+    </div>
+    <div class="demo-row">
+      <button data-agent="sub:demo0001:aaaa1111" data-status="working">서브1 일함</button>
+      <button data-agent="sub:demo0001:bbbb2222" data-status="working">서브2 일함</button>
+      <button data-agent="sub:demo0001:aaaa1111" data-status="idle">서브1 쉼</button>
+      <button data-agent="main:demo0002" data-status="approval">다른 세션 결재</button>
+      <button data-old="1">결재 7분 전으로</button>
+    </div>
+  </section>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

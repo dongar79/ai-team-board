@@ -1,0 +1,15 @@
+{
+  "name": "AI팀 사무실",
+  "short_name": "AI팀",
+  "description": "Claude Code 가 일하는 중인지, 사장님 확인을 기다리는지 보는 상황판",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ecebe4",
+  "theme_color": "#2b2f3a",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
