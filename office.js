@@ -9,11 +9,13 @@
     gpt: { x: 81, y: 36.6 }, gemini: { x: 81, y: 49.6 }, aside: { x: 81, y: 62.6 },
   };
   board.slots = SLOTS;
+  board.activeDelegations = (row) => (row.threads || [row]).filter((thread) => thread.status !== "idle" && thread.parent);
   board.layout = () => {
     const live = board.groupRows(), team = board.teamRows();
     const placed = [], overflow = [];
-    const parentIds = new Set(team.flatMap((row) => (row.threads || []).map((thread) => thread.parent).filter(Boolean)));
-    const linked = (row) => (row.threads || []).some((thread) => parentIds.has(thread.agent));
+    const parentIds = new Set(team.flatMap((row) => board.activeDelegations(row).map((thread) => thread.parent)));
+    const linked = (row) => (row.threads || []).some((thread) => parentIds.has(thread.agent)
+      || (thread.assistants || []).some((assistant) => parentIds.has(assistant.agent)));
     const put = (list, zone, ordered = false) => {
       const rank = (row) => row.agent === board.selected ? 2 : Number(linked(row));
       const rows = ordered ? list : [...list].sort((a, b) => rank(b) - rank(a) || board.compare(a, b));
@@ -34,8 +36,10 @@
     const layer = board.$("chars");
     if (!board.$("boss").firstChild) board.$("boss").innerHTML = board.bossPortrait();
     const seen = new Set();
+    const rows = [...layout.live, ...layout.team], inbox = board.inboxRows();
     ["working", "question", "approval", "report"].forEach((status) => {
-      board.$("n-" + status).textContent = [...layout.live, ...layout.team].filter((row) => row.status === status).length;
+      board.$("n-" + status).textContent = status === "working"
+        ? rows.reduce((total, row) => total + (row.busyCount || 0), 0) : inbox.filter((row) => row.status === status).length;
     });
     layout.placed.forEach(({ row, pos, zone }) => {
       seen.add(row.agent);
@@ -82,7 +86,7 @@
     layer.querySelectorAll(".overflow").forEach((element) => element.remove());
     const links = board.$("links"); links.replaceChildren();
     layout.placed.filter(({ row }) => ["gpt", "gemini", "aside"].includes(board.roleKey(row))).forEach(({ row, pos }) => {
-      const parents = new Set((row.threads || [row]).map((thread) => thread.parent).filter(Boolean));
+      const parents = new Set(board.activeDelegations(row).map((thread) => thread.parent));
       const linked = new Set();
       parents.forEach((parentId) => {
         const parent = layout.placed.find((item) => (item.row.threads || []).some((thread) => thread.agent === parentId || (thread.assistants || []).some((assistant) => assistant.agent === parentId)));

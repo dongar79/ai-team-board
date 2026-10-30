@@ -7,11 +7,12 @@
     reserved: { gpt: true, gemini: true, aside: true },
     priority: { approval: 0, question: 1, report: 2, working: 3, idle: 4 },
     lateMs: 5 * 60000, staleMs: 12 * 3600000, workStaleMs: 20 * 60000,
-    reportMs: 15 * 60000, loungeMs: 2 * 3600000,
+    reportMs: 15 * 60000, loungeMs: 2 * 3600000, clockSkewMs: 2 * 60000,
     $: (id) => document.getElementById(id),
     time: (value) => { const date = Date.parse(value); return Number.isFinite(date) ? date : 0; },
     minutes: (ms) => Math.max(0, Math.floor(ms / 60000)),
     waiting: (row) => row.status === "question" || row.status === "approval",
+    busy: (row) => ["working", "question", "approval"].includes(row.status),
     statusLabel: (status) => ({ working: "일하는 중", question: "질문 대기", approval: "결재 대기", report: "완료 보고", idle: "쉬는 중" }[status] || "상태 미확인"),
   };
   board.kind = (row) => Object.keys(board.reserved).find((kind) => row.agent === kind || row.agent.startsWith(kind + ":"))
@@ -29,7 +30,7 @@
     .map((row) => board.effective(row, now)).sort(board.compare);
   board.reporting = (row, now = Date.now()) => board.kind(row) === "main" && row.status === "idle"
     && row.task === "답변 완료" && board.time(row.updated_at) > 0
-    && now - board.time(row.updated_at) >= 0 && now - board.time(row.updated_at) < board.reportMs;
+    && now - board.time(row.updated_at) >= -board.clockSkewMs && now - board.time(row.updated_at) < board.reportMs;
   board.groupColor = (name) => {
     let hash = 0;
     for (const letter of String(name || "컴퓨터")) hash = (Math.imul(hash, 31) + letter.codePointAt(0)) >>> 0;
@@ -39,12 +40,14 @@
   const newest = (rows) => rows.reduce((latest, row) => board.time(row.updated_at) > board.time(latest.updated_at) ? row : latest, rows[0]);
   const thread = (main, assistants, now) => {
     const members = [main, ...assistants].map((row) => board.effective(row, now));
-    const active = members.map((row) => board.reporting(row, now) ? { ...row, status: "report" } : row).sort(board.compare);
+    // 메인이 답변을 마쳐도 보조가 진행·대기 중이면 해당 쓰레드는 아직 진행 중이다.
+    const active = members.map((row) => board.reporting(row, now) ? { ...row, status: "report" } : row)
+      .sort((a, b) => Number(board.busy(b)) - Number(board.busy(a)) || board.compare(a, b));
     const urgent = active[0], recent = newest(members);
     const helpers = members.slice(1).filter((row) => row.status !== "idle");
     return { ...main, rawStatus: main.status, status: urgent.status, task: urgent.task,
       status_since: urgent.status_since || urgent.updated_at, updated_at: recent.updated_at,
-      assistants: helpers, assistantCount: helpers.length, busy: members.some((row) => row.status === "working"),
+      assistants: helpers, assistantCount: helpers.length, busy: members.some(board.busy),
       unresponsive: members.every((row) => row.status === "idle") && members.some((row) => row.unresponsive),
       restSince: Math.max(...members.map((row) => row.unresponsive
         ? board.time(row.updated_at) + board.workStaleMs : board.since(row))) };
@@ -54,6 +57,7 @@
     const restSince = Math.max(...threads.map((row) => row.restSince || board.since(row)));
     return { ...urgent, agent, group_name: groupName, host, threads: ordered, hasRecords: true,
       updated_at: recent.updated_at, busyCount: threads.filter((row) => row.busy).length,
+      unresponsive: threads.some((row) => row.unresponsive),
       assistantCount: threads.reduce((total, row) => total + row.assistantCount, 0),
       reportCount: threads.filter((row) => row.status === "report").length,
       restSince, loungeEligible: urgent.status === "idle" && now - restSince < board.loungeMs };
@@ -65,6 +69,7 @@
     rows.filter((row) => board.kind(row) === "sub").forEach((row) => {
       const parentAgent = row.parent || "main:" + row.agent.split(":")[1], key = identity(row, parentAgent);
       if (!parents.has(key)) {
+        if (row.status === "idle") return;
         // 부모 기록이 없어도 보조 캐릭터를 따로 만들지 않고 부모 업무로 묶는다.
         const parent = { ...row, agent: parentAgent, status: "idle", task: "부모 기록 확인 불가", title: "" };
         parents.set(key, parent);
@@ -87,16 +92,26 @@
     const candidates = [...board.rows.values()].filter((row) => board.kind(row) === agent
       && now - board.time(row.updated_at) < board.staleMs);
     const sessions = new Map();
-    candidates.forEach((row) => {
-      const key = JSON.stringify([row.host || "", row.session_id || row.agent]), previous = sessions.get(key);
+    const identity = (row) => JSON.stringify([row.host || "", row.agent.startsWith(agent + ":delegate:")
+      ? row.agent : row.session_id || row.agent]);
+    const merge = (key, row) => {
+      const previous = sessions.get(key);
       const delta = previous ? board.time(row.updated_at) - board.time(previous.updated_at) : 1;
       // 예전 단일 행과 세션별 행이 공존하면 최신 기록을, 같은 시각이면 세션별 행을 쓴다.
       if (!previous || delta > 0 || (delta === 0 && row.agent !== agent && previous.agent === agent)) sessions.set(key, row);
+    };
+    candidates.filter((row) => row.agent !== agent).forEach((row) => merge(identity(row), row));
+    candidates.filter((row) => row.agent === agent).forEach((row) => {
+      const matches = [...sessions.entries()].filter(([, modern]) => (modern.host || "") === (row.host || "")
+        && (!row.session_id || modern.session_id === row.session_id));
+      // 식별자가 없는 옛 단일 행은 같은 PC의 최신 업무 한 건과 합친다. 동시 위임은 별도 유지한다.
+      matches.sort((a, b) => board.time(b[1].updated_at) - board.time(a[1].updated_at) || a[0].localeCompare(b[0]));
+      merge(matches.length ? matches[0][0] : identity(row), row);
     });
     const rows = [...sessions.values()].map((row) => thread(row, [], now));
     if (!rows.length) return { agent, status: "idle", task: "", project: "", host: "", title: "",
       threads: [], busyCount: 0, assistantCount: 0, reportCount: 0, hasRecords: false, loungeEligible: false };
-    return aggregate(agent, rows, "", [...new Set(rows.map((row) => row.host).filter(Boolean))].join(" · "), now);
+    return aggregate(agent, rows, "", [...new Set(rows.map((row) => row.host || "PC 미확인"))].join(" · "), now);
   });
   board.upsert = (row) => {
     if (!row || typeof row.agent !== "string") return;
@@ -116,8 +131,9 @@
         Math.max(0, Math.min(now, end) - Math.max(midnight, entry.start)));
     };
     [...events].sort((a, b) => board.time(a.created_at) - board.time(b.created_at) || Number(a.id) - Number(b.id)).forEach((event) => {
-      const at = board.time(event.created_at);
-      if (!at || at > now) return;
+      const recordedAt = board.time(event.created_at);
+      if (!recordedAt || recordedAt > now + board.clockSkewMs) return;
+      const at = Math.min(recordedAt, now);
       if (at >= midnight) {
         if (event.task === "지시 받음" && !String(event.note || "").trimStart().startsWith("<")) result.orders++;
         if (event.status === "approval") result.approvals++;
